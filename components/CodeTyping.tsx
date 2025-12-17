@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Editor from 'react-simple-code-editor';
 import { highlight, languages } from 'prismjs';
 import 'prismjs/components/prism-javascript';
@@ -10,26 +10,72 @@ import 'prismjs/themes/prism-tomorrow.css';
 interface CodeTypingProps {
   targetCode: string;
   language: string;
-  onComplete: () => void;
+  onComplete: (code: string) => void;
+  initialCode?: string;
+  readOnly?: boolean;
+  onChange?: (code: string) => void;
 }
 
-export function CodeTyping({ targetCode, language, onComplete }: CodeTypingProps) {
-  const [code, setCode] = useState('');
+export function CodeTyping({ targetCode, language, onComplete, initialCode = '', readOnly = false, onChange }: CodeTypingProps) {
+  const [code, setCode] = useState(initialCode);
   const [isComplete, setIsComplete] = useState(false);
   const hasCalledComplete = useRef(false);
 
   useEffect(() => {
+    // Reset when initialCode changes
+    setCode(initialCode);
+    setIsComplete(false);
+    hasCalledComplete.current = false;
+  }, [initialCode]);
+
+  useEffect(() => {
+    // Require an exact match with the target code
     if (code === targetCode) {
       setIsComplete(true);
-      if (!hasCalledComplete.current) {
+      if (!hasCalledComplete.current && !readOnly) {
         hasCalledComplete.current = true;
-        onComplete();
+        onComplete(code);
       }
     } else {
       setIsComplete(false);
       hasCalledComplete.current = false;
     }
-  }, [code, targetCode]);
+  }, [code, targetCode, readOnly, onComplete]);
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (readOnly) return;
+
+    if (event.key === 'Enter') {
+      event.preventDefault();
+
+      const textarea = event.target as HTMLTextAreaElement;
+      const { selectionStart, selectionEnd, value } = textarea;
+
+      const before = value.slice(0, selectionStart);
+      const after = value.slice(selectionEnd);
+
+      const lineStart = before.lastIndexOf('\n') + 1;
+      const currentLine = before.slice(lineStart);
+      const indentMatch = currentLine.match(/^\s*/);
+      const baseIndent = indentMatch ? indentMatch[0] : '';
+
+      const trimmedBefore = before.trimEnd();
+      const shouldIndentMore = trimmedBefore.endsWith('{');
+      const indent = baseIndent + (shouldIndentMore ? '  ' : '');
+      const insert = '\n' + indent;
+
+      const newValue = before + insert + after;
+      const newCursor = before.length + insert.length;
+
+      setCode(newValue);
+      onChange?.(newValue);
+
+      requestAnimationFrame(() => {
+        const target = event.target as HTMLTextAreaElement;
+        target.setSelectionRange(newCursor, newCursor);
+      });
+    }
+  };
 
   const doHighlight = (code: string) => {
     const lang = language === 'typescript' ? languages.typescript : languages.javascript;
@@ -38,7 +84,6 @@ export function CodeTyping({ targetCode, language, onComplete }: CodeTypingProps
 
   // Add line numbers to code
   const codeLines = code.split('\n');
-  const targetLines = targetCode.split('\n');
 
   return (
     <div className="w-full h-full flex">
@@ -53,17 +98,24 @@ export function CodeTyping({ targetCode, language, onComplete }: CodeTypingProps
       <div className={`flex-1 relative ${isComplete ? 'ring-2 ring-green-500 ring-inset' : ''}`}>
         <Editor
           value={code}
-          onValueChange={setCode}
+          onValueChange={value => {
+            if (readOnly) return;
+            setCode(value);
+            onChange?.(value);
+          }}
           highlight={doHighlight}
           padding={16}
           tabSize={2}
           insertSpaces
           spellCheck={false}
+          onKeyDown={handleKeyDown}
+          disabled={readOnly}
           className="font-mono text-sm bg-[#1e1e1e] text-white h-full editor"
           style={{
             fontFamily: 'Menlo, Monaco, "Courier New", monospace',
             fontSize: '0.95rem',
             lineHeight: '1.5',
+            opacity: readOnly ? 0.7 : 1,
           }}
         />
         {isComplete && (
