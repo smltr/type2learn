@@ -160,7 +160,7 @@ export default function Home() {
             </div>
             <div className="flex-1 overflow-auto p-3 font-mono text-xs text-[#cccccc]">
               <span className="text-[#cccccc]">$ Made by <a href="https://github.com/smltr" target="_blank" rel="noopener noreferrer" className="text-green-400 hover:underline">Sam</a></span>
-              <div className="mt-1"><a href="https://github.com/smltr/type2learn" target="_blank" rel="noopener noreferrer" className="text-green-400 hover:underline">github.com/smltr/type2learn</a></div>
+              <div className="text-[#cccccc]"><a href="https://github.com/smltr/type2learn" target="_blank" rel="noopener noreferrer" className="hover:underline">github.com/smltr/type2learn</a></div>
             </div>
           </div>
         </div>

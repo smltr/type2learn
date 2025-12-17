@@ -17,7 +17,8 @@ export function CodeDisplay({ code, language, title }: CodeDisplayProps) {
           </div>
           <div className="flex-1">
             <div className="text-[#cccccc] text-xs mb-2">
-              I'll help you practice <span className="font-semibold">{title}</span>. Type this code in the editor to build muscle memory:
+              <p className="mb-2">This app helps you internalize TypeScript syntax by typing it. When typing code from memory instead of copy-pasting, you build the muscle memory and notice what you struggle to remember.</p>
+              <p>Type the below code character for character for practice.</p>
             </div>
           </div>
         </div>
@@ -57,13 +58,12 @@ export function CodeDisplay({ code, language, title }: CodeDisplayProps) {
           <div className="text-[#cccccc] text-xs leading-relaxed">
             <p className="mb-2"><strong>How to practice:</strong></p>
             <ul className="list-disc list-inside space-y-1 text-[#a0a0a0] ml-2">
-              <li>Read and understand the code above</li>
-              <li>Type it from memory in the editor</li>
-              <li>No copy-pasting! This builds muscle memory</li>
+              <li>Type the code from memory into the editor</li>
+              <li>Try typing out an entire line without looking back</li>
+              <li>Notice when you have to look back, and reflect on why</li>
             </ul>
             <p className="mt-3 text-[#a0a0a0] italic">
-              Typing code from memory helps you "chunk" programming patterns into long-term memory. 
-              This is how experts develop fluency with syntax and patterns.
+              Typing code from short-term memory requires you to "chunk" it, forcing you to notice patterns.  
             </p>
           </div>
         </div>
