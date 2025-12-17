@@ -2,6 +2,9 @@
 
 A code typing practice application that improves programming memory and syntax retention by requiring users to memorize and type code snippets without copy-pasting, strengthening their ability to chunk programming constructs mentally.
 
+![Type2Learn App](./app.png)
+
+
 ## Tech Stack
 
 - **Framework**: Next.js 16 (App Router)
