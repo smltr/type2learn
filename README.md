@@ -24,6 +24,18 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) to see the app.
 
+## Gemini Snippet Generator
+
+The “Generate snippet” button calls the Gemini API via a Next.js route handler.
+
+Create a `.env.local` file with:
+
+```bash
+GEMINI_API_KEY=your_key_here
+```
+
+The server currently uses a hardcoded Gemini model (`gemini-3-flash-preview`).
+
 ## Adding Components
 
 Add shadcn/ui components as needed:

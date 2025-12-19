@@ -3,6 +3,7 @@
 ## Overview
 Type2Learn is a code typing practice application with a VS Code-inspired interface. The app helps users improve programming muscle memory by requiring them to memorize and type code snippets without copy-pasting. It features a three-panel layout mimicking VS Code's UI with a file explorer, code editor, and AI assistant chat panel.
 
+
 ## Current Implementation Status
 
 ### ✅ Core Features Implemented
@@ -68,6 +69,12 @@ Type2Learn is a code typing practice application with a VS Code-inspired interfa
   - `prismjs` (editor)
 - **UI Components**: shadcn/ui components configured
 
+#### 7. LLM Snippet Generator (Gemini)
+- **Placement**: Assistant panel includes a generator card under the intro message
+- **Controls**: Language dropdown (TypeScript/JavaScript/Python), preset topic dropdown (syntax, loops, if statements, maps, binary trees, recursion patterns), and free-text topic input
+- **Behavior**: Calls `/api/generate` to Gemini 1.5 Flash with a short cooldown to avoid rapid-fire requests; appends generated snippet to the practice list and jumps to it
+- **Dependencies**: Requires `GEMINI_API_KEY` env var; front-end guard only (no server-side rate limiting or persistence)
+
 ### 📂 File Structure
 
 ```
@@ -100,6 +107,7 @@ type2learn/
 - Completed snippets are tracked but not persisted (lost on refresh)
 - No local storage or database integration
 - Progress resets when page reloads
+- Generated snippets are also not persisted; refresh loses them
 
 #### Editor Features
 - No syntax error checking during typing
@@ -108,11 +116,12 @@ type2learn/
 - No undo/redo beyond browser defaults
 
 #### Snippet System
-- Only 5 hardcoded snippets
+- Only 5 built-in snippets by default
 - No difficulty filtering or selection
 - No random shuffle option
 - Can't add custom snippets
 - No snippet categories (React, Node, algorithms, etc.)
+- LLM-generated snippets are transient and not saved outside the session
 
 #### Progress & Gamification
 - No statistics (WPM, accuracy, time taken)
@@ -134,6 +143,7 @@ type2learn/
 - Can't reveal one line at a time
 - No practice modes (e.g., comment-guided)
 - No spaced repetition algorithm
+- LLM generator provides code only; no line-by-line explanations yet
 
 ### 🎯 Well-Architected Aspects
 
@@ -189,6 +199,7 @@ type2learn/
 14. Export/import custom snippet collections
 15. Add audio feedback for completion
 
+
 ### 🌱 Future Features / Ideas
 - Vim-style motions and modal editing to speed practice (likely requires swapping the editor to Codemirror or Monaco for richer keybinding support)
 - Smarter editing helpers (auto-indent, bracket matching, auto-closing pairs) to better mimic IDE ergonomics
@@ -243,10 +254,11 @@ This `agents.md` file serves as a living document to track the application's evo
 ```
 
 **Version History:**
+- **0.2.0** (Dec 17, 2025) - Added Gemini-powered snippet generator in assistant panel
 - **0.1.0** (Dec 16, 2025) - Initial documentation of functional MVP
 
 ---
 
-**Last Updated**: December 16, 2025  
-**Version**: 0.1.0  
+**Last Updated**: December 17, 2025  
+**Version**: 0.2.0  
 **Status**: Functional MVP with strong foundation for expansion

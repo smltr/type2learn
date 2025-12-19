@@ -1,20 +1,25 @@
 'use client';
 
-import { useState } from 'react';
-import { CodeDisplay } from '@/components/CodeDisplay';
+import { useEffect, useRef, useState } from 'react';
 import { CodeTyping } from '@/components/CodeTyping';
-import { ReactIcon } from '@/components/ReactIcon';
+import { AssistantSidebar } from '@/components/AssistantSidebar';
+import { HistorySidebar } from '@/components/HistorySidebar';
 import { codeSnippets, type CodeSnippet } from '@/lib/snippets';
 
 export default function Home() {
+  const [snippets, setSnippets] = useState<CodeSnippet[]>(codeSnippets);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userCode, setUserCode] = useState<Record<string, string>>({});
   const [selectedFileIndex, setSelectedFileIndex] = useState<number | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generateError, setGenerateError] = useState<string | null>(null);
+  const [isCoolingDown, setIsCoolingDown] = useState(false);
+  const cooldownTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const currentSnippet = codeSnippets[currentIndex];
+  const currentSnippet = snippets[currentIndex];
   const isViewingHistory = selectedFileIndex !== null;
-  const selectedSnippet = isViewingHistory && selectedFileIndex !== null ? codeSnippets[selectedFileIndex] : null;
-  const currentCode = userCode[currentSnippet.id] || '';
+  const selectedSnippet = isViewingHistory && selectedFileIndex !== null ? snippets[selectedFileIndex] : null;
+  const currentCode = currentSnippet ? userCode[currentSnippet.id] || '' : '';
   const displaySnippet = isViewingHistory && selectedSnippet ? selectedSnippet : currentSnippet;
 
   const getFileName = (snippet: CodeSnippet) =>
@@ -25,13 +30,14 @@ export default function Home() {
   };
 
   const handleComplete = (code: string) => {
+    if (!currentSnippet) return;
     setUserCode(prev => ({ ...prev, [currentSnippet.id]: code }));
   };
 
-  const nextSnippet = (currentCode: string) => {
-    if (currentIndex < codeSnippets.length - 1) {
+  const nextSnippet = () => {
+    if (currentIndex < snippets.length - 1 && currentSnippet) {
       // Save current code if not empty
-      if (currentCode.trim()) {
+      if (currentCode.trim() && currentSnippet) {
         const snippetId = currentSnippet.id;
         setUserCode(prev => ({ ...prev, [snippetId]: currentCode }));
       }
@@ -40,8 +46,8 @@ export default function Home() {
     }
   };
 
-  const previousSnippet = (currentCode: string) => {
-    if (currentIndex > 0) {
+  const previousSnippet = () => {
+    if (currentIndex > 0 && currentSnippet) {
       // Save current code if not empty
       if (currentCode.trim()) {
         const snippetId = currentSnippet.id;
@@ -60,6 +66,64 @@ export default function Home() {
     setSelectedFileIndex(null);
   };
 
+  const handleGenerateSnippet = async ({ language, topic }: { language: string; topic: string }) => {
+    if (isGenerating || isCoolingDown) return;
+    setGenerateError(null);
+    setIsGenerating(true);
+    try {
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ language, topic }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const message = typeof data.error === 'string' ? data.error : 'Failed to generate snippet.';
+        throw new Error(message);
+      }
+
+      const code = typeof data.code === 'string' ? data.code.trim() : '';
+      if (!code) {
+        throw new Error('Model returned empty code. Try another topic.');
+      }
+
+      const newSnippet: CodeSnippet = {
+        id: `gemini-${Date.now()}`,
+        title: `Gemini: ${topic}`,
+        language,
+        difficulty: 'medium',
+        code,
+      };
+
+      setSnippets(prev => {
+        const next = [...prev, newSnippet];
+        setCurrentIndex(next.length - 1);
+        setSelectedFileIndex(null);
+        return next;
+      });
+    } catch (error) {
+      setGenerateError(error instanceof Error ? error.message : 'Failed to generate snippet.');
+    } finally {
+      setIsGenerating(false);
+      setIsCoolingDown(true);
+      if (cooldownTimer.current) {
+        clearTimeout(cooldownTimer.current);
+      }
+      cooldownTimer.current = setTimeout(() => {
+        setIsCoolingDown(false);
+      }, 4000);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (cooldownTimer.current) {
+        clearTimeout(cooldownTimer.current);
+      }
+    };
+  }, []);
+
   return (
     <div className="h-screen flex flex-col bg-[#1e1e1e] text-white overflow-hidden">
       {/* Top bar - VS Code style */}
@@ -69,39 +133,14 @@ export default function Home() {
 
       {/* Main content area */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Left sidebar - History */}
-        <div className="w-52 bg-[#252526] border-r border-[#1e1e1e] flex flex-col">
-          <div className="h-9 flex items-center px-3 text-xs text-[#cccccc] uppercase tracking-wide">
-            History
-          </div>
-          <div className="flex-1 overflow-auto text-xs">
-            <div className="px-2 py-1">
-              <div className="ml-2 space-y-0.5">
-                {/* Show files for current snippet + all completed snippets */}
-                {codeSnippets.slice(0, currentIndex + 1).map((snippet, index) => {
-                  const isActive = !isViewingHistory && index === currentIndex;
-                  const isSelected = isViewingHistory && selectedFileIndex === index;
-                  const fileName = getFileName(snippet);
-
-                  return (
-                    <div
-                      key={snippet.id}
-                      className={`py-0.5 px-1 -ml-1 cursor-pointer hover:bg-[#2a2d2e] ${
-                        isActive || isSelected ? 'bg-[#37373d] text-white' : 'text-[#cccccc]'
-                      }`}
-                      onClick={() => handleFileClick(index)}
-                    >
-                      <span className="mr-2 inline-flex align-middle">
-                        <ReactIcon size={14} />
-                      </span>
-                      {fileName}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        </div>
+        <HistorySidebar
+          snippets={snippets}
+          currentIndex={currentIndex}
+          isViewingHistory={isViewingHistory}
+          selectedFileIndex={selectedFileIndex}
+          getFileName={getFileName}
+          onFileClick={handleFileClick}
+        />
 
         {/* Center - Editor + Terminal */}
         <div className="flex-1 flex flex-col min-w-0">
@@ -141,15 +180,17 @@ export default function Home() {
                 );
               })()
             ) : (
-              <CodeTyping
-                key={`practice-${currentIndex}`}
-                targetCode={currentSnippet.code}
-                language={currentSnippet.language}
-                onComplete={handleComplete}
-                initialCode={userCode[currentSnippet.id] || ''}
-                readOnly={false}
-                onChange={value => handleCodeChange(currentSnippet.id, value)}
-              />
+              currentSnippet && (
+                <CodeTyping
+                  key={`practice-${currentIndex}`}
+                  targetCode={currentSnippet.code}
+                  language={currentSnippet.language}
+                  onComplete={handleComplete}
+                  initialCode={userCode[currentSnippet.id] || ''}
+                  readOnly={false}
+                  onChange={value => handleCodeChange(currentSnippet.id, value)}
+                />
+              )
             )}
           </div>
 
@@ -165,38 +206,18 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Right sidebar - Chat/AI */}
-        <div className="w-96 bg-[#252526] border-l border-[#1e1e1e] flex flex-col">
-          <div className="h-9 flex items-center px-3 text-xs text-[#cccccc] border-b border-[#1e1e1e]">
-            <span>Assistant</span>
-          </div>
-          <div className="flex-1 overflow-auto">
-            <CodeDisplay
-              code={displaySnippet.code}
-              language={displaySnippet.language}
-              title={displaySnippet.title}
-            />
-          </div>
-          {/* Navigation controls in chat panel */}
-          {!isViewingHistory && (
-            <div className="p-2 border-t border-[#1e1e1e] flex gap-2">
-              <button
-                onClick={() => previousSnippet(currentCode)}
-                disabled={currentIndex === 0}
-                className="flex-1 px-3 py-1.5 bg-[#0e639c] hover:bg-[#1177bb] text-white text-xs rounded disabled:opacity-30 disabled:cursor-not-allowed"
-              >
-                ← Previous
-              </button>
-              <button
-                onClick={() => nextSnippet(currentCode)}
-                disabled={currentIndex === codeSnippets.length - 1}
-                className="flex-1 px-3 py-1.5 bg-[#0e639c] hover:bg-[#1177bb] text-white text-xs rounded disabled:opacity-30 disabled:cursor-not-allowed"
-              >
-                Next →
-              </button>
-            </div>
-          )}
-        </div>
+        <AssistantSidebar
+          displaySnippet={displaySnippet}
+          isViewingHistory={isViewingHistory}
+          isAtStart={currentIndex === 0}
+          isAtEnd={currentIndex === snippets.length - 1}
+          onPrevious={previousSnippet}
+          onNext={nextSnippet}
+          onGenerateSnippet={handleGenerateSnippet}
+          isGenerating={isGenerating}
+          generateError={generateError}
+          isCoolingDown={isCoolingDown}
+        />
       </div>
     </div>
   );
