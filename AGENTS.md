@@ -12,7 +12,7 @@ Type2Learn is a code typing practice application with a VS Code-inspired interfa
 - **Three-panel layout** with accurate VS Code styling:
   - Left: File explorer sidebar (fixed width: 208px)
   - Center: Code editor with tab bar and terminal panel
-  - Right: AI assistant chat panel (fixed width: 384px)
+  - Right: AI assistant chat panel (fixed width: 420px)
 - **Color scheme**: Authentic VS Code dark theme
   - Background: `#1e1e1e`
   - Sidebar: `#252526`
@@ -22,7 +22,7 @@ Type2Learn is a code typing practice application with a VS Code-inspired interfa
   - Top menu bar with app title
   - File explorer with folder/file icons
   - Tab bar showing "practice.tsx"
-  - Terminal panel at bottom (40px height) with "ABOUT" section
+  - Terminal panel at bottom (160px height) with "ABOUT" section
   - Line numbers in the editor
 
 #### 2. Code Editor Component (`CodeTyping.tsx`)
@@ -59,6 +59,10 @@ Type2Learn is a code typing practice application with a VS Code-inspired interfa
 - **Navigation buttons**: Previous/Next controls in assistant panel
 - **Button states**: Disabled at boundaries (first/last snippet)
 
+#### 5.1 Sidebar Components
+- **History sidebar**: Extracted into a dedicated component (`HistorySidebar.tsx`)
+- **Assistant sidebar**: Extracted into a dedicated component (`AssistantSidebar.tsx`) which also owns the Previous/Next navigation UI
+
 #### 6. Tech Stack
 - **Framework**: Next.js 16 with App Router
 - **Language**: TypeScript
@@ -86,6 +90,9 @@ type2learn/
 ├── components/
 │   ├── CodeDisplay.tsx       # AI assistant chat panel with code display
 │   └── CodeTyping.tsx        # Code editor with validation
+│   ├── AssistantSidebar.tsx  # Right sidebar (chat + navigation)
+│   ├── HistorySidebar.tsx    # Left sidebar (history/file list)
+│   └── ReactIcon.tsx         # React icon used in history list
 ├── lib/
 │   ├── snippets.ts           # Code snippet definitions
 │   └── utils.ts              # Utility functions (likely cn helper)
@@ -95,7 +102,7 @@ type2learn/
 ### 🎨 Design Decisions
 
 1. **VS Code Fidelity**: High attention to detail matching VS Code's exact color palette and spacing
-2. **Fixed Panel Widths**: Sidebar (208px) and chat (384px) are fixed; editor is flexible
+2. **Fixed Panel Widths**: Sidebar (208px) and chat (420px) are fixed; editor is flexible
 3. **No Resizing**: Panels are not resizable (could be future enhancement)
 4. **Monospace Consistency**: Ensures alignment between line numbers and code
 5. **Terminal Panel**: Currently static with creator info; could be used for feedback/hints
@@ -255,10 +262,11 @@ This `agents.md` file serves as a living document to track the application's evo
 
 **Version History:**
 - **0.2.0** (Dec 17, 2025) - Added Gemini-powered snippet generator in assistant panel
+- **0.2.1** (Dec 19, 2025) - Extracted History/Assistant sidebars into dedicated components
 - **0.1.0** (Dec 16, 2025) - Initial documentation of functional MVP
 
 ---
 
-**Last Updated**: December 17, 2025  
-**Version**: 0.2.0  
+**Last Updated**: December 19, 2025  
+**Version**: 0.2.1  
 **Status**: Functional MVP with strong foundation for expansion

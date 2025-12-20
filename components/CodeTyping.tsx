@@ -18,29 +18,21 @@ interface CodeTypingProps {
 
 export function CodeTyping({ targetCode, language, onComplete, initialCode = '', readOnly = false, onChange }: CodeTypingProps) {
   const [code, setCode] = useState(initialCode);
-  const [isComplete, setIsComplete] = useState(false);
   const hasCalledComplete = useRef(false);
 
-  useEffect(() => {
-    // Reset when initialCode changes
-    setCode(initialCode);
-    setIsComplete(false);
-    hasCalledComplete.current = false;
-  }, [initialCode]);
+  const isComplete = code === targetCode;
 
   useEffect(() => {
-    // Require an exact match with the target code
-    if (code === targetCode) {
-      setIsComplete(true);
-      if (!hasCalledComplete.current && !readOnly) {
-        hasCalledComplete.current = true;
-        onComplete(code);
-      }
-    } else {
-      setIsComplete(false);
+    if (!isComplete) {
       hasCalledComplete.current = false;
+      return;
     }
-  }, [code, targetCode, readOnly, onComplete]);
+
+    if (!hasCalledComplete.current && !readOnly) {
+      hasCalledComplete.current = true;
+      onComplete(code);
+    }
+  }, [isComplete, code, readOnly, onComplete]);
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (readOnly) return;

@@ -41,7 +41,6 @@ export function CodeDisplay({
       <div className="mb-4">
         <div className="text-[#cccccc] text-xs mb-2">
           <p className="mb-2">This app helps you internalize TypeScript syntax by typing it. When typing code from memory instead of copy-pasting, you build the muscle memory and notice what you struggle to remember.</p>
-          <p className="mb-3">Type the below code character for character for practice.</p>
           <div className="bg-[#1e1e1e] border border-[#3e3e42] rounded p-3 space-y-3">
             <div className="text-[#cccccc] font-semibold text-[11px]">Generate a new snippet</div>
             <form className="space-y-3" onSubmit={handleSubmit}>
@@ -90,6 +89,7 @@ export function CodeDisplay({
           </div>
         </div>
       </div>
+      <p className="mb-3">Type the below code character for character for practice.</p>
 
       {/* Code block in chat */}
       <div className="mb-4 bg-[#1e1e1e] rounded border border-[#3e3e42] overflow-hidden">
@@ -97,34 +97,34 @@ export function CodeDisplay({
           <span className="truncate">{title}</span>
           <span className="text-[#8f8f8f] ml-2">{language}</span>
         </div>
-      <Highlight theme={themes.nightOwl} code={code} language={language}>
-        {({ className, style, tokens, getLineProps, getTokenProps }) => {
-          return (
-            <pre
-              className={`${className} p-3 text-xs overflow-y-auto overflow-x-hidden whitespace-pre-wrap break-words`}
-              style={{
-                ...style,
-                fontSize: '0.75rem',
-                lineHeight: '1.4',
-                backgroundColor: '#1e1e1e',
-                maxHeight: '400px',
-                whiteSpace: 'pre-wrap',
-                wordBreak: 'break-word',
-                overflowX: 'hidden',
-                overflowY: 'auto',
-              }}
-            >
-              {tokens.map((line, i) => (
-                <div key={i} {...getLineProps({ line })}>
-                  {line.map((token, key) => (
-                    <span key={key} {...getTokenProps({ token })} />
-                  ))}
-                </div>
-              ))}
-            </pre>
-          );
-        }}
-      </Highlight>
+        <Highlight theme={themes.nightOwl} code={code} language={language}>
+          {({ className, style, tokens, getLineProps, getTokenProps }) => {
+            return (
+              <pre
+                className={`${className} p-3 text-xs overflow-y-auto overflow-x-hidden whitespace-pre-wrap break-words`}
+                style={{
+                  ...style,
+                  fontSize: '0.7rem',
+                  lineHeight: '1.35',
+                  backgroundColor: '#1e1e1e',
+                  maxHeight: '400px',
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-word',
+                  overflowX: 'hidden',
+                  overflowY: 'auto',
+                }}
+              >
+                {tokens.map((line, i) => (
+                  <div key={i} {...getLineProps({ line })}>
+                    {line.map((token, key) => (
+                      <span key={key} {...getTokenProps({ token })} />
+                    ))}
+                  </div>
+                ))}
+              </pre>
+            );
+          }}
+        </Highlight>
       </div>
     </div>
   );

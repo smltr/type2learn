@@ -10,20 +10,12 @@ export default function Home() {
   const [snippets, setSnippets] = useState<CodeSnippet[]>(codeSnippets);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userCode, setUserCode] = useState<Record<string, string>>({});
-  const [selectedFileIndex, setSelectedFileIndex] = useState<number | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
   const [isCoolingDown, setIsCoolingDown] = useState(false);
   const cooldownTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const currentSnippet = snippets[currentIndex];
-  const isViewingHistory = selectedFileIndex !== null;
-  const selectedSnippet = isViewingHistory && selectedFileIndex !== null ? snippets[selectedFileIndex] : null;
-  const currentCode = currentSnippet ? userCode[currentSnippet.id] || '' : '';
-  const displaySnippet = isViewingHistory && selectedSnippet ? selectedSnippet : currentSnippet;
-
-  const getFileName = (snippet: CodeSnippet) =>
-    `${snippet.title.toLowerCase().replace(/\s+/g, '-')}.${snippet.language === 'typescript' ? 'tsx' : 'jsx'}`;
 
   const handleCodeChange = (snippetId: string, code: string) => {
     setUserCode(prev => ({ ...prev, [snippetId]: code }));
@@ -32,38 +24,6 @@ export default function Home() {
   const handleComplete = (code: string) => {
     if (!currentSnippet) return;
     setUserCode(prev => ({ ...prev, [currentSnippet.id]: code }));
-  };
-
-  const nextSnippet = () => {
-    if (currentIndex < snippets.length - 1 && currentSnippet) {
-      // Save current code if not empty
-      if (currentCode.trim() && currentSnippet) {
-        const snippetId = currentSnippet.id;
-        setUserCode(prev => ({ ...prev, [snippetId]: currentCode }));
-      }
-      setCurrentIndex(currentIndex + 1);
-      setSelectedFileIndex(null);
-    }
-  };
-
-  const previousSnippet = () => {
-    if (currentIndex > 0 && currentSnippet) {
-      // Save current code if not empty
-      if (currentCode.trim()) {
-        const snippetId = currentSnippet.id;
-        setUserCode(prev => ({ ...prev, [snippetId]: currentCode }));
-      }
-      setCurrentIndex(currentIndex - 1);
-      setSelectedFileIndex(null);
-    }
-  };
-
-  const handleFileClick = (index: number) => {
-    setSelectedFileIndex(index);
-  };
-
-  const backToCurrentPractice = () => {
-    setSelectedFileIndex(null);
   };
 
   const handleGenerateSnippet = async ({ language, topic }: { language: string; topic: string }) => {
@@ -99,7 +59,6 @@ export default function Home() {
       setSnippets(prev => {
         const next = [...prev, newSnippet];
         setCurrentIndex(next.length - 1);
-        setSelectedFileIndex(null);
         return next;
       });
     } catch (error) {
@@ -133,64 +92,29 @@ export default function Home() {
 
       {/* Main content area */}
       <div className="flex-1 flex overflow-hidden">
-        <HistorySidebar
-          snippets={snippets}
-          currentIndex={currentIndex}
-          isViewingHistory={isViewingHistory}
-          selectedFileIndex={selectedFileIndex}
-          getFileName={getFileName}
-          onFileClick={handleFileClick}
-        />
+        <HistorySidebar />
 
         {/* Center - Editor + Terminal */}
         <div className="flex-1 flex flex-col min-w-0">
           {/* Tab bar */}
           <div className="h-9 bg-[#252526] border-b border-[#1e1e1e] flex items-center">
             <div className="bg-[#1e1e1e] px-4 py-2 text-xs text-[#cccccc] border-r border-[#1e1e1e] flex items-center gap-2">
-              <span>{isViewingHistory && selectedSnippet ? getFileName(selectedSnippet) : getFileName(currentSnippet)}</span>
+              <span>practice.md</span>
             </div>
           </div>
 
           {/* Editor area */}
           <div className="flex-1 overflow-hidden bg-[#1e1e1e]">
-            {isViewingHistory ? (
-              (() => {
-                const historySnippet = selectedSnippet!;
-                return (
-              <div className="w-full h-full flex flex-col">
-                <div className="flex-1 overflow-auto">
-                  <CodeTyping
-                    key={`history-${selectedFileIndex}`}
-                    targetCode={historySnippet.code}
-                    language={historySnippet.language}
-                    onComplete={handleComplete}
-                    initialCode={userCode[historySnippet.id] || ''}
-                    readOnly={true}
-                  />
-                </div>
-                <div className="p-2 bg-[#252526] border-t border-[#1e1e1e]">
-                  <button
-                    onClick={backToCurrentPractice}
-                    className="px-3 py-1.5 bg-[#0e639c] hover:bg-[#1177bb] text-white text-xs rounded"
-                  >
-                    ← Back to Current Practice
-                  </button>
-                </div>
-                </div>
-                );
-              })()
-            ) : (
-              currentSnippet && (
-                <CodeTyping
-                  key={`practice-${currentIndex}`}
-                  targetCode={currentSnippet.code}
-                  language={currentSnippet.language}
-                  onComplete={handleComplete}
-                  initialCode={userCode[currentSnippet.id] || ''}
-                  readOnly={false}
-                  onChange={value => handleCodeChange(currentSnippet.id, value)}
-                />
-              )
+            {currentSnippet && (
+              <CodeTyping
+                key={`practice-${currentIndex}`}
+                targetCode={currentSnippet.code}
+                language={currentSnippet.language}
+                onComplete={handleComplete}
+                initialCode={userCode[currentSnippet.id] || ''}
+                readOnly={false}
+                onChange={value => handleCodeChange(currentSnippet.id, value)}
+              />
             )}
           </div>
 
@@ -207,12 +131,7 @@ export default function Home() {
         </div>
 
         <AssistantSidebar
-          displaySnippet={displaySnippet}
-          isViewingHistory={isViewingHistory}
-          isAtStart={currentIndex === 0}
-          isAtEnd={currentIndex === snippets.length - 1}
-          onPrevious={previousSnippet}
-          onNext={nextSnippet}
+          displaySnippet={currentSnippet}
           onGenerateSnippet={handleGenerateSnippet}
           isGenerating={isGenerating}
           generateError={generateError}
